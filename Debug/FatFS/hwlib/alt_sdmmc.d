@@ -1,0 +1,15 @@
+FatFS/hwlib/alt_sdmmc.o: ../FatFS/hwlib/alt_sdmmc.c
+FatFS/hwlib/alt_sdmmc.o: ../FatFS/hwlib/alt_sdmmc.h
+FatFS/hwlib/alt_sdmmc.o: ../FatFS/hwlib/hwlib.h
+FatFS/hwlib/alt_sdmmc.o: ../FatFS/hwlib/alt_hwlibs_ver.h
+FatFS/hwlib/alt_sdmmc.o: ../FatFS/hwlib/alt_clock_manager.h
+FatFS/hwlib/alt_sdmmc.o: ../FatFS/hwlib/alt_clock_group.h
+FatFS/hwlib/alt_sdmmc.o: ../FatFS/hwlib/socal/alt_clkmgr.h
+FatFS/hwlib/alt_sdmmc.o: ../FatFS/hwlib/alt_reset_manager.h
+FatFS/hwlib/alt_sdmmc.o: ../FatFS/hwlib/alt_cache.h
+FatFS/hwlib/alt_sdmmc.o: ../FatFS/hwlib/socal/alt_sdmmc.h
+FatFS/hwlib/alt_sdmmc.o: ../FatFS/hwlib/socal/alt_rstmgr.h
+FatFS/hwlib/alt_sdmmc.o: ../FatFS/hwlib/socal/alt_sysmgr.h
+FatFS/hwlib/alt_sdmmc.o: ../FatFS/hwlib/socal/hps.h
+FatFS/hwlib/alt_sdmmc.o: ../FatFS/hwlib/socal/socal.h
+FatFS/hwlib/alt_sdmmc.o: ../FatFS/hwlib/alt_printf.h

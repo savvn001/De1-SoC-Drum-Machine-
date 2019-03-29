@@ -1,0 +1,3 @@
+HPS_I2C/HPS_I2C.o: ../HPS_I2C/HPS_I2C.c
+HPS_I2C/HPS_I2C.o: ../HPS_I2C/HPS_I2C.h
+HPS_I2C/HPS_I2C.o: ../HPS_I2C/../HPS_Watchdog/HPS_Watchdog.h
