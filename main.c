@@ -21,6 +21,7 @@
 int main (void)
 {
 
+	//Buffer to store audio data from sample
 	int16_t ramBufferDacData0Stereo[2 * 1024];
 
 	FillBufferFromSDcard(ramBufferDacData0Stereo); //Left CH
@@ -29,6 +30,7 @@ int main (void)
 	readWavFileHeader("kick.wav");
 
 	ResetWDT();
+
 
 	while(1){
 		HPS_ResetWatchdog();
