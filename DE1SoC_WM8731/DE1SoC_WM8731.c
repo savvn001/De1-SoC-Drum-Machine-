@@ -6,6 +6,9 @@
 // Driver global static variables (visible only to this .c file)
 //
 
+
+/**** MODIFIED REGISTERS FOR 44.1KHZ SAMPLE RATE INPUT/OUTPUT *******/
+
 //Driver Base Address
 volatile unsigned int *wm8731_base_ptr = 0x0;
 //Driver Initialised
@@ -56,11 +59,11 @@ signed int WM8731_initialise ( unsigned int base_address ) {
     if (status != HPS_I2C_SUCCESS) return status;
     status = HPS_I2C_write16b(0, 0x1A, (WM8731_I2C_ANLGPATHCNTRL<<9) | 0x12); //Use Line In. Disable Bypass. Use DAC
     if (status != HPS_I2C_SUCCESS) return status;
-    status = HPS_I2C_write16b(0, 0x1A, (WM8731_I2C_DGTLPATHCNTRL<<9) | 0x06); //Enable High-Pass filter. 48kHz sample rate.
+    status = HPS_I2C_write16b(0, 0x1A, (WM8731_I2C_DGTLPATHCNTRL<<9) | 0x04); //Enable High-Pass filter. 44.1kHz sample rate
     if (status != HPS_I2C_SUCCESS) return status;
     status = HPS_I2C_write16b(0, 0x1A, (WM8731_I2C_DATAFMTCNTRL <<9) | 0x4E); //I2S Mode, 24bit, Master Mode (do not change this!)
     if (status != HPS_I2C_SUCCESS) return status;
-    status = HPS_I2C_write16b(0, 0x1A, (WM8731_I2C_SMPLINGCNTRL <<9) | 0x00); //Normal Mode, 48kHz sample rate
+    status = HPS_I2C_write16b(0, 0x1A, (WM8731_I2C_SMPLINGCNTRL <<9) | 0x20); //Normal Mode, 44.1kHz sample rate
     if (status != HPS_I2C_SUCCESS) return status;
     status = HPS_I2C_write16b(0, 0x1A, (WM8731_I2C_ACTIVECNTRL  <<9) | 0x01); //Enable Codec
     if (status != HPS_I2C_SUCCESS) return status;

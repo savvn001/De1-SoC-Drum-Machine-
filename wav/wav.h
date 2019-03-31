@@ -19,17 +19,12 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#define WAV_FILENAME             "kick.wav"
-#define BUFFERSIZE               1024
-
 FATFS FatFs; /* FatFs work area needed for each volume */
 FIL Fil; /* File object needed for each open file */
 FIL WAVfile; //Wav file object
 
 
-int16_t ramBufferDacData0Stereo[2 * BUFFERSIZE];
-int16_t ramBufferDacData1Stereo[2 * BUFFERSIZE];
-uint32_t ByteCounter;
+uint32_t ByteCounter = 0;
 
 /** WAV header structure */
 typedef struct {
@@ -53,7 +48,7 @@ WAV_Header_TypeDef wavHeader;
 
 
 /*** Function Prototypes ****/
-void FillBufferFromSDcard(int16_t  *buffer);
+void FillBufferFromSDcard(int32_t  *buffer);
 
 
 
@@ -84,9 +79,6 @@ void readWavFileHeader(const TCHAR* filename) {
 	/* Read header and place in header struct */
 	f_read(&WAVfile, &wavHeader, sizeof(wavHeader), &bytes_read);
 
-	wavHeader.channels;
-
-
 }
 
 /*
@@ -96,12 +88,10 @@ void readWavFileHeader(const TCHAR* filename) {
  *
  */
 
-void FillBufferFromSDcard(int16_t  *buffer)
+void FillBufferFromSDcard(int32_t  *buffer)
 {
-  UINT     bytes_read;
-  int      i, j;
-  uint16_t tmp;
 
+    UINT     bytes_read;
 
     /* Stereo, Store Left and Right data interlaced as in wavfile */
 	/* Basically, wav file data section interleaves the samples for
@@ -111,39 +101,11 @@ void FillBufferFromSDcard(int16_t  *buffer)
 	 */
 
     /* First buffer is filled from SD-card */
-    f_read(&WAVfile, buffer, 4 * BUFFERSIZE, &bytes_read);
+    f_read(&WAVfile, buffer, 2 *2048, &bytes_read);
     ByteCounter += bytes_read;
-
-    for (i = 0; i < 2 * BUFFERSIZE; i++)
-    {
-      /* Adjust volume */
-      buffer[i] = (buffer[i] * (int32_t) 1) / 100;
-
-      /* Convert from signed to unsigned */
-     // tmp = buffer[i] + 0x8000;
-
-      /* Convert to 12 bits */
-      //tmp >>= 4;
-
-     // buffer[i] = tmp;
-    }
-
 
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 #endif /* WAV_WAV_H_ */
