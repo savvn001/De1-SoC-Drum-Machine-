@@ -9,7 +9,6 @@
  * Has functions to read a .wav file with a given name, inspect its'
  * 44-byte header and store the raw audio data into a buffer
  *
- * Implementation adapted from https://github.com/EnergyMicro/EFM32G_DK3550/blob/master/examples/wavplayer/wavplayer.c#L538
  *
  */
 #ifndef WAV_WAV_H_
@@ -18,13 +17,20 @@
 #include "../FatFS/ff.h"		/* Declarations of FatFs API */
 #include <stdbool.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 FATFS FatFs; /* FatFs work area needed for each volume */
 FIL Fil; /* File object needed for each open file */
 FIL WAVfile; //Wav file object
 
 
+/* Memory addresses for DDR memory. DDR memory is split into 1G x 32 bit fields
+ * (Address 0x00000000 to 0x3FFFFFFF).
+ */
+
 uint32_t ByteCounter = 0;
+
+
 
 /** WAV header structure */
 typedef struct {
@@ -48,8 +54,6 @@ WAV_Header_TypeDef wavHeader;
 
 
 /*** Function Prototypes ****/
-void FillBufferFromSDcard(int32_t  *buffer);
-
 
 
 /*
@@ -67,7 +71,7 @@ void initFatFS(){
  *	in the above struct
  *
  */
-void readWavFileHeader(const TCHAR* filename) {
+uint32_t readWavFileHeader(const TCHAR* filename) {
 
 	UINT bytes_read; //Output number of bytes read from wav file
 
@@ -79,6 +83,9 @@ void readWavFileHeader(const TCHAR* filename) {
 	/* Read header and place in header struct */
 	f_read(&WAVfile, &wavHeader, sizeof(wavHeader), &bytes_read);
 
+	int bytes =  wavHeader.bytes_in_data;
+	return bytes;
+
 }
 
 /*
@@ -87,22 +94,27 @@ void readWavFileHeader(const TCHAR* filename) {
  * so after byte 44.
  *
  */
-
-void FillBufferFromSDcard(int32_t  *buffer)
+void FillBufferFromSDcard(int16_t *buffer)
 {
 
-    UINT     bytes_read;
+	UINT bytes_read;
 
-    /* Stereo, Store Left and Right data interlaced as in wavfile */
+
+
+	/* Stereo, Store Left and Right data interlaced as in wavfile */
 	/* Basically, wav file data section interleaves the samples for
 	 * left and right channels so this single array represents the Left and
 	 * Right channels of data and is interleaved like [L] [R] [L] [R] [L] [R] etc...
-	 *
+	 * this gets separated later when outputting to codec
 	 */
 
-    /* First buffer is filled from SD-card */
-    f_read(&WAVfile, buffer, 2 *2048, &bytes_read);
-    ByteCounter += bytes_read;
+	//Fill buffer with audio data from wav file
+	/*As the FIL object fptr value is 44 now, this will now conveniently start collecting everything from
+	 * byte 44 onwards
+	 */
+
+	f_read(&WAVfile, buffer, wavHeader.bytes_in_data, &bytes_read);
+	ByteCounter += bytes_read;
 
 
 }
