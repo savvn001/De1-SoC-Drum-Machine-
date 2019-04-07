@@ -16,10 +16,18 @@
 #include "HPS_Watchdog/HPS_Watchdog.h"
 #include "HPS_usleep/HPS_usleep.h"
 #include "DE1SoC_WM8731/DE1SoC_WM8731.h"
+#include "HPS_IRQ/HPS_IRQ.h"
 #include "wav/wav.h"
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
+
+#define HPS_GPIO_PORT  0
+#define HPS_GPIO_DDR   1
+#define HPS_GPIO_PIN  20
+#define NO_OF_CHANNELS 2
+
+#define BUFFERSIZE 45224
 
 void exitOnFail(signed int status, signed int successStatus) {
 	if (status != successStatus) {
@@ -27,38 +35,107 @@ void exitOnFail(signed int status, signed int successStatus) {
 	}
 }
 
-//Define some useful constants
-#define F_SAMPLE 44100.0        //Sampling rate of WM8731 Codec
-#define PI2      6.28318530718  //2 x Pi      (Apple or Peach?)
+int BPM = 128;
+int sequence_step = 0;
+int16_t kick_sequence[8] = { 1, 0, 0, 0, 1, 0, 0, 0 };
+int16_t hat_sequence[8] = { 0, 1, 0, 1, 0, 1, 0, 1 };
+
+int sample_val = 0;
+
+int16_t kick_buffer[45224];
+
+/********************* Function Prototypes ******************************/
+void step16(HPSIRQSource interruptID, bool isInit, void* initParams);
+void audioISR(HPSIRQSource interruptID, bool isInit, void* initParams);
 
 int main(void) {
 
 	///////////////////////////////////////////////////////////////////
-	//////////////////// Timer Setup /////////////////////////////////
+	//////////////////// Timer Interrupt Setup /////////////////////////////////
 	///////////////////////////////////////////////////////////////////
 
-	// Red LEDs base address
-	volatile unsigned int *LEDR_ptr = (unsigned int *) 0xFF200000;
-	// ARM A9 Private Timer Load
-	volatile unsigned int *private_timer_load = (unsigned int *) 0xFFFEC600;
-	// ARM A9 Private Timer Value
-	volatile unsigned int *private_timer_value = (unsigned int *) 0xFFFEC604;
-	// ARM A9 Private Timer Control
-	volatile unsigned int *private_timer_control = (unsigned int *) 0xFFFEC608;
-	// ARM A9 Private Timer Interrupt
-	volatile unsigned int *private_timer_interrupt = (unsigned int *) 0xFFFEC60C;
-	/* Local Variables */
-	unsigned int lastBlinkTimerValue = *private_timer_value;
-	const unsigned int blinkPeriod = 600000000;
-	/* Initialisation */
-	// Set initial value of LEDs
-	*LEDR_ptr = 0x1;
-	// Configure the ARM Private Timer
-	// Set the "Load" value of the timer to max value:
-	*private_timer_load = 0xFFFFFFFF;
-	// Set the "Prescaler" value to 0, Enable the timer (E = 1), Set Automatic reload
-	// on overflow (A = 1), and disable ISR (I = 0)
-	*private_timer_control = (0 << 8) | (0 << 2) | (1 << 1) | (1 << 0);
+	/****** Timer 0 will be called every 1/6th of a beat, so used for the step sequencer *******/
+	volatile unsigned int * HPS_timer0_ptr = (unsigned int *) 0xFFC08000;
+	volatile unsigned int * HPS_gpio_ptr = (unsigned int *) 0xFF709000;
+
+	// Set GPIO LED to output, and low
+	unsigned int gpio_rmw;
+	//Set HPS LED low
+	gpio_rmw = HPS_gpio_ptr[HPS_GPIO_PORT];
+	gpio_rmw = gpio_rmw & ~(1 << 24);
+	HPS_gpio_ptr[HPS_GPIO_PORT] = gpio_rmw;
+	//Set HPS LED to output
+	gpio_rmw = HPS_gpio_ptr[HPS_GPIO_DDR];
+	gpio_rmw = gpio_rmw | (1 << 24);
+	HPS_gpio_ptr[HPS_GPIO_DDR] = gpio_rmw;
+	HPS_ResetWatchdog();
+
+	//Initialise IRQs
+	HPS_IRQ_initialise(NULL);
+	HPS_ResetWatchdog();
+
+	// Timer base address
+	HPS_timer0_ptr[2] = 0; // write to control register to stop timer
+
+	/* Set the timer period, this should mean step function gets called every 1/4 of a beat
+	 * meaning each step is 1/6th of a bar (4 beats in a bar)
+	 */
+	HPS_timer0_ptr[0] = (100000000 * (BPM / 60)) / 16;
+	// Write to control register to start timer, with interrupts
+	HPS_timer0_ptr[2] = 0x03; // mode = 1, enable = 1
+	// Register interrupt handler for timer
+	HPS_IRQ_registerHandler(IRQ_TIMER_L4SP_0, step16);
+	HPS_ResetWatchdog();
+
+	/*********** Timer 1 will be called every time period of the sampling rate Fs, so 1/Fs ******/
+
+	volatile unsigned int * HPS_timer1_ptr = (unsigned int *) 0xFFC09000;
+
+	// Timer base address
+	HPS_timer1_ptr[2] = 0; // write to control register to stop timer
+
+	/* Set timer period to 1/48kHz (or as close as it can get to it)
+	 */
+	HPS_timer1_ptr[0] = 2083.33333333; //2083.33333333
+	// Write to control register to start timer, with interrupts
+	HPS_timer1_ptr[2] = 0x03; // mode = 1, enable = 1
+
+	/* Call function before registering to handler with IRQ driver
+	 * so can set some of the values inside before interrupts enabled
+	 */
+//	audioISR(IRQ_TIMER_L4SP_1, true, 0);
+	// Register interrupt handler for timer
+	//HPS_IRQ_registerHandler(IRQ_TIMER_L4SP_1, audioISR);
+	HPS_ResetWatchdog();
+
+	/////////////////////////////////////////////////////////////////////////////
+	//////////////////////// Playback Setup /////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
+
+	struct channel {
+
+		int16_t play_sequence[8];
+		int16_t *sample_buffer;
+		bool isPlaying;
+
+	} kick, snare;
+
+	/**************** KICK *******************/
+
+	kick.play_sequence[0] = 1;
+	kick.play_sequence[1] = 0;
+	kick.play_sequence[2] = 0;
+	kick.play_sequence[3] = 0;
+	kick.play_sequence[4] = 1;
+	kick.play_sequence[5] = 0;
+	kick.play_sequence[6] = 0;
+	kick.play_sequence[7] = 0;
+	//Create array to store audio samples
+	kick.sample_buffer = (int16_t*) malloc(sizeof(int16_t) * 20774);
+	kick.isPlaying = false;
+
+	signed int audioOutputL = 0;
+	signed int audioOutputR = 0;
 
 	///////////////////////////////////////////////////////////////////
 	//////////////////// SD Card Setup /////////////////////////////////
@@ -68,36 +145,22 @@ int main(void) {
 
 	//Calculate size of buffer from header value which returns no. of bytes in data
 	const int header = readWavFileHeader("kick2.wav");
-	const int kick_buffer_size = 45224;
+	const int kick_buffer_size = 20774; // ********* TO DO ********** figure out why i can't set this equal to 'header'
 
-	//Create array to store samples
-	//int16_t *kick_buffer = malloc(kick_buffer_size * sizeof(*kick_buffer));
-	int16_t kick_buffer[kick_buffer_size];
-
-	for (int i = 0; i < kick_buffer_size; i++) {
-		kick_buffer[i] = 0;
+	for (int i = 0; i < 20774; i++) {
+		kick.sample_buffer[i] = 0;
 	}
 
 	//Fill with data
-	FillBufferFromSDcard(kick_buffer);
+	FillBufferFromSDcard(kick.sample_buffer);
 
 	/////////////////////////////////////////////////////////////////////////////
 	//////////////////////// Audio Codec Setup //////////////////////////////////
 	/////////////////////////////////////////////////////////////////////////////
 
-	//Phase Accumulator
-	double phase = 0.0;  // Phase accumulator
-	double inc = 0.0;  // Phase increment
-	double ampl = 0.0;  // Tone amplitude (i.e. volume)
-	signed int audio_sample = 0;
-
 	volatile unsigned char* fifospace_ptr;
 	volatile unsigned int* audio_left_ptr;
 	volatile unsigned int* audio_right_ptr;
-
-	inc = 440.0 * PI2 / F_SAMPLE; // Calculate the phase increment based on desired frequency - e.g. 440Hz
-	ampl = 8388608.0; // Pick desired amplitude (e.g. 2^23). WARNING: If too high = deafening!
-	phase = 0.0;
 
 	//Initialise the Audio Codec.
 	exitOnFail(WM8731_initialise(0xFF203040),  //Initialise Audio Codec
@@ -111,29 +174,90 @@ int main(void) {
 	audio_left_ptr = WM8731_getLeftFIFOPtr();
 	audio_right_ptr = WM8731_getRightFIFOPtr();
 
-	int i = 0;
+	//////////////////////////////////////////////////////////////////////////////////////////////
 
 	while (1) {
 
-		//Check for space in outgoing FIFO (128 samples wide)
+		//Check for space in outgoing FIFOs (each 128 samples wide)
 		if ((fifospace_ptr[2] > 0) && (fifospace_ptr[3] > 0)) {
-
 			//While there's space, fill it up with samples
 
-			// Output tone to left and right channels.
-			*audio_left_ptr =  (signed int) kick_buffer[i] * 10000;
-			*audio_right_ptr = (signed int) kick_buffer[i + 1] * 10000;
+			//for(k = 0; k < (no. of channels); k++)
 
-			i += 2;
+			//Get output from kick
+			if (sample_val < 20774) {
+
+				audioOutputL += kick.sample_buffer[sample_val] * 1000;
+				audioOutputR += kick.sample_buffer[sample_val + 1] * 1000;
+				sample_val += 2;
+			}
+
+			//Get output from hi hat1
+
+			// Output summed master output to FIFO buffer
+			*audio_left_ptr = audioOutputL;
+			*audio_right_ptr = audioOutputR;
+
+			//Reset back to  0
+			audioOutputL = 0;
+			audioOutputR = 0;
+
 		}
-
-		if(i == kick_buffer_size){
-			i = 0;
-		}
-
 
 		//Reset the watchdog.
 		HPS_ResetWatchdog();
 
 	}
 }
+
+void step16(HPSIRQSource interruptID, bool isInit, void* initParams) {
+	if (!isInit) {
+
+		volatile unsigned int * HPS_timer0_ptr = (unsigned int *) 0xFFC08000;
+		volatile unsigned int * HPS_gpio_ptr = (unsigned int *) 0xFF709000;
+		volatile unsigned int * LED_step_ptr = (unsigned int *) 0xFF200000;
+
+		//Toggle board green LED every step
+		unsigned int gpio_rmw;
+		gpio_rmw = HPS_gpio_ptr[HPS_GPIO_PORT];
+		gpio_rmw = gpio_rmw ^ (1 << 24);
+		HPS_gpio_ptr[HPS_GPIO_PORT] = gpio_rmw;
+
+		//Clear the Timer Interrupt Flag
+		//By reading timer end of interrupt register
+		gpio_rmw = HPS_timer0_ptr[3];
+
+		*LED_step_ptr = 0x200 >> sequence_step;
+
+		//Check if sound set to trigger on current step
+		if (kick_sequence[sequence_step]) {
+			sample_val = 0; //Set kick drum sample buffer to 0 - plays from start
+		}
+
+		//Increment LEDs to show step then start from beginning again if 7
+		if (sequence_step < 7) {
+			sequence_step++;
+		} else {
+			sequence_step = 0;
+		}
+
+	}
+
+	HPS_ResetWatchdog();
+
+}
+
+void audioISR(HPSIRQSource interruptID, bool isInit, void* initParams) {
+
+	if (!isInit) {
+
+		//Clear the Timer Interrupt Flag
+		//By reading timer end of interrupt register
+		//unsigned int clear = HPS_timer1_ptr[3];
+	}
+
+	HPS_ResetWatchdog();
+
+}
+
+
