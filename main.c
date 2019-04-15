@@ -118,9 +118,9 @@ int main(void) {
 		int16_t *sample_buffer;
 		bool isPlaying;
 
-	} kick, snare;
+	} kick, snare, hatc, hato, tom, crash, ride, clap;
 
-	/**************** KICK *******************/
+	/**************** Kick *******************/
 
 	kick.play_sequence[0] = 1;
 	kick.play_sequence[1] = 0;
@@ -130,9 +130,14 @@ int main(void) {
 	kick.play_sequence[5] = 0;
 	kick.play_sequence[6] = 0;
 	kick.play_sequence[7] = 0;
-	//Create array to store audio samples
-	kick.sample_buffer = (int16_t*) malloc(sizeof(int16_t) * 20774);
 	kick.isPlaying = false;
+
+	/**************** Clap *******************/
+
+
+
+	/**************** Closed Hat *******************/
+
 
 	signed int audioOutputL = 0;
 	signed int audioOutputR = 0;
@@ -144,10 +149,11 @@ int main(void) {
 	initFatFS();
 
 	//Calculate size of buffer from header value which returns no. of bytes in data
-	const int header = readWavFileHeader("kick2.wav");
-	const int kick_buffer_size = 20774; // ********* TO DO ********** figure out why i can't set this equal to 'header'
-
-	for (int i = 0; i < 20774; i++) {
+	const int kickBufferSize = readWavFileHeader("kick.wav")/2;
+	//Create array to store audio samples
+	kick.sample_buffer = (int16_t*) malloc(sizeof(int16_t) * kickBufferSize);
+	//Init all elements to 0 to avoid any potential issues
+	for (int i = 0; i < kickBufferSize; i++) {
 		kick.sample_buffer[i] = 0;
 	}
 
@@ -185,7 +191,7 @@ int main(void) {
 			//for(k = 0; k < (no. of channels); k++)
 
 			//Get output from kick
-			if (sample_val < 20774) {
+			if (sample_val < kickBufferSize) {
 
 				audioOutputL += kick.sample_buffer[sample_val] * 1000;
 				audioOutputR += kick.sample_buffer[sample_val + 1] * 1000;
