@@ -27,13 +27,14 @@
 #define HPS_GPIO_PIN  20
 #define NO_OF_CHANNELS 2
 
-#define BUFFERSIZE 45224
 
 void exitOnFail(signed int status, signed int successStatus) {
 	if (status != successStatus) {
 		exit((int) status); //Add breakpoint here to catch failure
 	}
 }
+
+/********************* Global Variables **********************************/
 
 int BPM = 128;
 int sequence_step = 0;

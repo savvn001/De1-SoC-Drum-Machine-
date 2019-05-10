@@ -23,11 +23,6 @@ FATFS FatFs; /* FatFs work area needed for each volume */
 FIL Fil; /* File object needed for each open file */
 FIL WAVfile; //Wav file object
 
-
-/* Memory addresses for DDR memory. DDR memory is split into 1G x 32 bit fields
- * (Address 0x00000000 to 0x3FFFFFFF).
- */
-
 uint32_t ByteCounter = 0;
 
 
@@ -109,10 +104,10 @@ void FillBufferFromSDcard(int16_t *buffer)
 	 */
 
 	//Fill buffer with audio data from wav file
+
 	/*As the FIL object fptr value is 44 now, this will now conveniently start collecting everything from
 	 * byte 44 onwards
 	 */
-
 	f_read(&WAVfile, buffer, wavHeader.bytes_in_data, &bytes_read);
 	ByteCounter += bytes_read;
 
