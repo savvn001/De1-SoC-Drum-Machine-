@@ -28,6 +28,7 @@ int dec_to_BCD_table(int no);
 int getNthDigit(int digit, int number);
 
 void exitOnFail(signed int status, signed int successStatus);
+void pushbuttonISR(HPSIRQSource interruptID, bool isInit, void* initParams);
 
 void audioPlaybackPolling();
 #endif /* PLAYBACK_ENGINE_PLAYBACK_ENGINE_H_ */

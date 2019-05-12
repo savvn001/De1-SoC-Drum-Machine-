@@ -13,6 +13,9 @@
 #define NO_OF_CHANNELS 2
 #define SEQUENCE_STEPS 8
 
+//Get switches pointer
+#define SWITCH_PTR 0xFF200040
+
 //Define some useful constants
 #define F_SAMPLE 48000.0        //Sampling rate of WM8731 Codec (Do not change)
 #define PI2      6.28318530718  //2 x Pi      (Apple or Peach?)
@@ -38,7 +41,7 @@ signed int audio_sample = 0;
 
 struct channel {
 
-	int16_t play_sequence[SEQUENCE_STEPS];	//Playback sequence
+	bool play_sequence[SEQUENCE_STEPS];	//Playback sequence
 	unsigned int bufferSize; 		//Number of elements in sample data
 	int16_t *sample_buffer;		//Pointer to buffer storing sample data
 	bool isPlaying;	//Used later on to determine whether instrument currently playing or not
@@ -48,11 +51,13 @@ struct channel {
 } kick, snare, hatc, hato, tom, crash, ride, clap;
 
 //List of channel names
-const char channel_names[8] = {
+char channel_names[8][10] = {
 
 "kick", "snare", "hatc", "hato", "tom", "crash", "ride", "clap" };
 
-char current_channel = channel_names[0];
+//This represents what channel we're currently sequencing/modifying so we know what channel to latch the sequence to
+//CH0 = Kick, CH1 = snare, CH2 = hatc etc... as ordered in struct declaration
+int current_channel = 0;
 
 void setup_playback() {
 
@@ -62,16 +67,15 @@ void setup_playback() {
 
 	/**************** Kick *******************/
 
-	kick.play_sequence[0] = 1;
-	kick.play_sequence[1] = 0;
-	kick.play_sequence[2] = 0;
-	kick.play_sequence[3] = 0;
-	kick.play_sequence[4] = 1;
-	kick.play_sequence[5] = 0;
-	kick.play_sequence[6] = 0;
-	kick.play_sequence[7] = 0;
-	kick.isPlaying = false;
-
+//	kick.play_sequence[0] = 1;
+//	kick.play_sequence[1] = 0;
+//	kick.play_sequence[2] = 0;
+//	kick.play_sequence[3] = 0;
+//	kick.play_sequence[4] = 1;
+//	kick.play_sequence[5] = 0;
+//	kick.play_sequence[6] = 0;
+//	kick.play_sequence[7] = 0;
+//	kick.isPlaying = false;
 	/**************** Clap *******************/
 
 	/**************** Closed Hat *******************/
@@ -90,24 +94,51 @@ void setup_playback() {
 	kick.sample_buffer = (int16_t*) malloc(sizeof(int16_t) * kick.bufferSize);
 	//Fill with data
 	FillBufferFromSDcard(kick.sample_buffer);
-	kick.sample_pt = 0;
+	kick.sample_pt = kick.bufferSize + 2; //Set it to outside range intially so it doesn't trigger
 	kick.volume = 6000;
 
 	///////////////////clap/////////////////////////////////////////////////////////////////////
-
 	clap.bufferSize = readWavFileHeader("clap.wav") / 2;
 	clap.sample_buffer = (int16_t*) malloc(sizeof(int16_t) * clap.bufferSize);
 	FillBufferFromSDcard(clap.sample_buffer);
 	clap.sample_pt = 0;
 	clap.volume = 6000;
-
 	///////////////////snare/////////////////////////////////////////////////////////////////////
 	snare.bufferSize = readWavFileHeader("snare.wav") / 2;
 	snare.sample_buffer = (int16_t*) malloc(sizeof(int16_t) * snare.bufferSize);
 	FillBufferFromSDcard(snare.sample_buffer);
 	snare.sample_pt = 0;
 	snare.volume = 6000;
-
+	///////////////////ride/////////////////////////////////////////////////////////////////////
+	ride.bufferSize = readWavFileHeader("ride.wav") / 2;
+	ride.sample_buffer = (int16_t*) malloc(sizeof(int16_t) * ride.bufferSize);
+	FillBufferFromSDcard(ride.sample_buffer);
+	ride.sample_pt = 0;
+	ride.volume = 6000;
+	///////////////////tom/////////////////////////////////////////////////////////////////////
+	tom.bufferSize = readWavFileHeader("tom.wav") / 2;
+	tom.sample_buffer = (int16_t*) malloc(sizeof(int16_t) * tom.bufferSize);
+	FillBufferFromSDcard(tom.sample_buffer);
+	tom.sample_pt = 0;
+	tom.volume = 6000;
+	///////////////////hatc/////////////////////////////////////////////////////////////////////
+	hatc.bufferSize = readWavFileHeader("hatc.wav") / 2;
+	hatc.sample_buffer = (int16_t*) malloc(sizeof(int16_t) * hatc.bufferSize);
+	FillBufferFromSDcard(hatc.sample_buffer);
+	hatc.sample_pt = 0;
+	hatc.volume = 6000;
+	///////////////////hato/////////////////////////////////////////////////////////////////////
+	hato.bufferSize = readWavFileHeader("hato.wav") / 2;
+	hato.sample_buffer = (int16_t*) malloc(sizeof(int16_t) * hato.bufferSize);
+	FillBufferFromSDcard(hato.sample_buffer);
+	hato.sample_pt = 0;
+	hato.volume = 6000;
+	///////////////////crash/////////////////////////////////////////////////////////////////////
+	crash.bufferSize = readWavFileHeader("crash.wav") / 2;
+	crash.sample_buffer = (int16_t*) malloc(sizeof(int16_t) * crash.bufferSize);
+	FillBufferFromSDcard(crash.sample_buffer);
+	crash.sample_pt = 0;
+	crash.volume = 6000;
 }
 
 void setup_codec() {
@@ -142,14 +173,10 @@ void step16(HPSIRQSource interruptID, bool isInit, void* initParams) {
 	if (!isInit) {
 
 		volatile unsigned int * HPS_timer0_ptr = (unsigned int *) 0xFFC08000;
-		volatile unsigned int * HPS_gpio_ptr = (unsigned int *) 0xFF709000;
 		volatile unsigned int * LED_step_ptr = (unsigned int *) 0xFF200000;
 
 		//Toggle board green LED every step
 		unsigned int gpio_rmw;
-		gpio_rmw = HPS_gpio_ptr[HPS_GPIO_PORT];
-		gpio_rmw = gpio_rmw ^ (1 << 24);
-		HPS_gpio_ptr[HPS_GPIO_PORT] = gpio_rmw;
 
 		*LED_step_ptr = 0x200 >> sequence_step;
 
@@ -159,7 +186,7 @@ void step16(HPSIRQSource interruptID, bool isInit, void* initParams) {
 		}
 
 		//Increment LEDs to show step then start from beginning again if 7
-		if (sequence_step < 7) {
+		if (sequence_step < SEQUENCE_STEPS - 1) {
 			sequence_step++;
 		} else {
 			sequence_step = 0;
@@ -274,6 +301,14 @@ void setup_IRQ() {
 	// Register interrupt handler for timer
 	HPS_IRQ_registerHandler(IRQ_TIMER_L4SP_0, step16);
 	HPS_ResetWatchdog();
+
+	volatile unsigned int * KEY_ptr = (unsigned int *) 0xFF200050;
+
+	// Configure Push Buttons to interrupt on press
+	KEY_ptr[2] = 0xF;     // Enable interrupts for all four KEYs
+
+	//Register interrupt handler for keys
+	HPS_IRQ_registerHandler(IRQ_LSC_KEYS, pushbuttonISR);
 
 	/*********** Timer 1 will be called every time period of the sampling rate Fs, so 1/Fs ******/
 
@@ -481,37 +516,72 @@ int getNthDigit(int digit, int number) {
 //button pressed
 void latchSequence() {
 
-	for (int i = 0; i < SEQUENCE_STEPS; ++i) {
+	//Get position of switches
+	volatile unsigned int * sw_ptr = (unsigned int *) SWITCH_PTR;
+
+	volatile unsigned int * HPS_gpio_ptr = (unsigned int *) 0xFF709000;
+
+	unsigned int sw_value = *sw_ptr;
+
+	//Toggle board green LED every step
+	unsigned int gpio_rmw;
+	gpio_rmw = HPS_gpio_ptr[HPS_GPIO_PORT];
+	gpio_rmw = gpio_rmw ^ (1 << 24);
+	HPS_gpio_ptr[HPS_GPIO_PORT] = gpio_rmw;
+
+	for (unsigned int i = 0; i < SEQUENCE_STEPS; i++) {
 
 		switch (current_channel) {
 
-		case "kick":
-			kick.play_sequence[i] = 0;
+		case 0:
+			kick.play_sequence[i] = (sw_value >> 9 - i) & 1U;
 			break;
-		case "clap":
+		case 7:
 			clap.play_sequence[i] = 0;
 			break;
-		case "snare":
+		case 1:
 			snare.play_sequence[i] = 0;
 			break;
-		case "hatc":
+		case 2:
 			hatc.play_sequence[i] = 0;
 			break;
-		case "hato":
+		case 3:
 			hato.play_sequence[i] = 0;
 			break;
-		case "ride":
+		case 5:
 			ride.play_sequence[i] = 0;
 			break;
-		case "crash":
+		case 6:
 			crash.play_sequence[i] = 0;
 			break;
-		case "tom":
+		case 4:
 			tom.play_sequence[i] = 0;
 			break;
-
 		}
 
 	}
 
+}
+
+//Key Released Interrupt Displays Last Button Released
+void pushbuttonISR(HPSIRQSource interruptID, bool isInit, void* initParams) {
+	if (!isInit) {
+		volatile unsigned int * KEY_ptr = (unsigned int *) 0xFF200050;
+		unsigned int press;
+
+		//Read the Push-button interrupt register
+		press = KEY_ptr[3];
+
+		//If KEY3 pressed
+		//if(press & (1 << 3)){
+		//Latch playback sequence from switches
+		latchSequence();
+		//}
+
+		//Then clear the interrupt flag by writing the value back
+		KEY_ptr[3] = press;
+
+	}
+	//Reset watchdog.
+	HPS_ResetWatchdog();
 }
