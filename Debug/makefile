@@ -8,7 +8,9 @@ RM := clean
 
 # All of the sources participating in the build are defined here
 -include sources.mk
+-include wav/subdir.mk
 -include VFP_Enable/subdir.mk
+-include Playback_Engine/subdir.mk
 -include HPS_usleep/subdir.mk
 -include HPS_IRQ/subdir.mk
 -include HPS_I2C/subdir.mk

@@ -39,6 +39,8 @@ FatFS/hwlib \
 HPS_I2C \
 HPS_IRQ \
 HPS_usleep \
+Playback_Engine \
 VFP_Enable \
 . \
+wav \
 

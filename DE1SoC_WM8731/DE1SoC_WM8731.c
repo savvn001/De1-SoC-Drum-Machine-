@@ -108,6 +108,23 @@ signed int WM8731_clearFIFO( bool adc, bool dac) {
     return WM8731_SUCCESS; //success
 }
 
+//Enable Interrupts that signal when write/read FIFO is 75% empty
+signed int WM8731_enableIRQ(){
+
+	unsigned int cntrl;
+    cntrl = wm8731_base_ptr[WM8731_CONTROL];
+    //WE
+    cntrl |= 1<<1;
+    //RE
+    //cntrl |= 1<<0;
+
+    wm8731_base_ptr[WM8731_CONTROL] = cntrl;
+
+
+	return WM8731_SUCCESS; //success
+
+}
+
 //Get FIFO Space Address
 volatile unsigned char* WM8731_getFIFOSpacePtr( void ) {
     return (unsigned char*)&wm8731_base_ptr[WM8731_FIFOSPACE];

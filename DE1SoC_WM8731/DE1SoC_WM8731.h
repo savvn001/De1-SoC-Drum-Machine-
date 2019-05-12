@@ -55,4 +55,7 @@ volatile unsigned int* WM8731_getLeftFIFOPtr( void );
 //Get Right FIFO Address
 volatile unsigned int* WM8731_getRightFIFOPtr( void );
 
+
+signed int WM8731_enableIRQ();
+
 #endif /*DE1SoC_WM8731_H_*/
