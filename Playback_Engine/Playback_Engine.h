@@ -15,6 +15,7 @@
 #include "../HPS_usleep/HPS_usleep.h"
 #include "../HPS_IRQ/HPS_IRQ.h"
 #include "../wav/wav.h"
+#include "../ImageDisplay/ImageDisplay.h"
 #include <math.h>
 
 

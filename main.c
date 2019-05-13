@@ -19,35 +19,31 @@
 
 
 
-
-
-
 int main(void) {
 
 	setup_playback();
 	setup_codec();
+	setup_graphics();
 	//fillFIFO();
 	setup_IRQ();
 
 	update7seg();
 
-
-
 	//Reset the watchdog.
 	HPS_ResetWatchdog();
 
+
+
+	ResetWDT();
 	//////////////////////////////////////////////////////////////////////////////////////////////
 
 	while (1) {
 
 		//for(k = 0; k < (no. of channels); k++)
 		audioPlaybackPolling();
-        HPS_ResetWatchdog();
+		HPS_ResetWatchdog();
 
 	}
 
-
-
 }
-
 

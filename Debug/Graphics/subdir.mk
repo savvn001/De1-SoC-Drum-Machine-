@@ -17,7 +17,7 @@ OBJS += \
 Graphics/%.o: ../Graphics/%.c
 	@echo 'Building file: $<'
 	@echo 'Invoking: ARM C Compiler 5'
-	armcc --cpu=Cortex-A9 --apcs=/hardfp --arm -O2 -Otime --vectorize -g --md --depend_format=unix_escaped --no_depend_system_headers --depend_dir="Graphics" -c -o "$@" "$<"
+	armcc --cpu=Cortex-A9 --apcs=/hardfp --arm --c99 --gnu -O0 -Otime -g --md --depend_format=unix_escaped --no_depend_system_headers --depend_dir="Graphics" -c -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 

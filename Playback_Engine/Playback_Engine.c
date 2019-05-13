@@ -145,6 +145,14 @@ void setup_codec() {
 
 }
 
+void setup_graphics(){
+
+
+	initDisplay();
+	Graphics_drawBox(0, 0, 239, 319, LT24_BLACK, 0, LT24_BLACK);
+	HPS_ResetWatchdog();
+}
+
 void step16(HPSIRQSource interruptID, bool isInit, void* initParams) {
 	if (!isInit) {
 
@@ -487,12 +495,12 @@ void update7seg() {
 //Have to update timer every time we change BPM
 void updateTimer() {
 
-//	HPS_timer0_ptr[2] = 0; // write to control register to stop timer
-//
-//	//Set timer period again
-//	HPS_timer0_ptr[0] = (100000000 * (BPM / 60)) / 16;
-//	//Set timer on again
-//	HPS_timer0_ptr[2] = 0x103; // mode = 1, enable = 1
+	HPS_timer0_ptr[2] = 0; // write to control register to stop timer
+
+	//Set timer period again
+	HPS_timer0_ptr[0] = (100000000 * (BPM / 60)) / 16;
+	//Set timer on again
+	HPS_timer0_ptr[2] = 0x03; // mode = 1, enable = 1
 
 }
 
@@ -621,6 +629,8 @@ void pushbuttonISR(HPSIRQSource interruptID, bool isInit, void* initParams) {
 			} else {
 				current_channel = 0;
 			}
+
+			drawUI(current_channel);
 
 		}
 

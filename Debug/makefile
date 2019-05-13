@@ -11,9 +11,11 @@ RM := clean
 -include wav/subdir.mk
 -include VFP_Enable/subdir.mk
 -include Playback_Engine/subdir.mk
+-include ImageDisplay/subdir.mk
 -include HPS_usleep/subdir.mk
 -include HPS_IRQ/subdir.mk
 -include HPS_I2C/subdir.mk
+-include Graphics/subdir.mk
 -include FatFS/hwlib/subdir.mk
 -include FatFS/subdir.mk
 -include DE1SoC_WM8731/subdir.mk

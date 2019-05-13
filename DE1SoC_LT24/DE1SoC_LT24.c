@@ -18,7 +18,7 @@ bool lt24_initialised = false;
 //
 
 //Uncomment this #define to enable the Hardware Optimised mode.
-//#define HARDWARE_OPTIMISED
+#define HARDWARE_OPTIMISED
 
 //PIO Bit Map
 #define LT24_WRn        (1 << 16)

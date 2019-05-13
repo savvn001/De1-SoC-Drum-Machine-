@@ -9,3 +9,6 @@ main.o: ../Playback_Engine/../HPS_IRQ/HPS_IRQ_IDs.h
 main.o: ../Playback_Engine/../wav/wav.h
 main.o: ../Playback_Engine/../wav/../FatFS/ff.h
 main.o: ../Playback_Engine/../wav/../FatFS/ffconf.h
+main.o: ../Playback_Engine/../ImageDisplay/ImageDisplay.h
+main.o: ../Playback_Engine/../ImageDisplay/../Graphics/Graphics.h
+main.o: ../Playback_Engine/../ImageDisplay/Images.h

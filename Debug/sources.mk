@@ -36,9 +36,11 @@ DE1SoC_LT24 \
 DE1SoC_WM8731 \
 FatFS \
 FatFS/hwlib \
+Graphics \
 HPS_I2C \
 HPS_IRQ \
 HPS_usleep \
+ImageDisplay \
 Playback_Engine \
 VFP_Enable \
 . \
