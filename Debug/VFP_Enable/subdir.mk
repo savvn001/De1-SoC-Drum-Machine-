@@ -17,7 +17,7 @@ OBJS += \
 VFP_Enable/%.o: ../VFP_Enable/%.c
 	@echo 'Building file: $<'
 	@echo 'Invoking: ARM C Compiler 5'
-	armcc --cpu=Cortex-A9 --apcs=/hardfp --arm --c99 --gnu -O0 -Otime -g --md --depend_format=unix_escaped --no_depend_system_headers --depend_dir="VFP_Enable" -c -o "$@" "$<"
+	armcc --cpu=Cortex-A9.no_neon --apcs=/hardfp --arm --c99 --gnu -O2 -Otime --loop_optimization_level=2 -g --md --depend_format=unix_escaped --no_depend_system_headers --depend_dir="VFP_Enable" -c -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 

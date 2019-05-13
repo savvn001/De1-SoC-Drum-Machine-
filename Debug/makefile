@@ -73,7 +73,7 @@ all: EmbeddedDrumMachine.axf
 EmbeddedDrumMachine.axf: $(OBJS) C:/Users/Nick/Documents/DS-5\ Workspace/EmbeddedDrumMachine/DDRRomRamIRQ.scat $(USER_OBJS) $(LIBS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: ARM Linker 5'
-	armlink --cpu=Cortex-A9 --entry=__main --scatter="C:/Users/Nick/Documents/DS-5 Workspace/EmbeddedDrumMachine/DDRRomRamIRQ.scat" --info=sizes -o "EmbeddedDrumMachine.axf" $(OBJS) $(USER_OBJS) $(LIBS)
+	armlink --cpu=Cortex-A9.no_neon --entry=__main --scatter="C:/Users/Nick/Documents/DS-5 Workspace/EmbeddedDrumMachine/DDRRomRamIRQ.scat" --info=sizes -o "EmbeddedDrumMachine.axf" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 

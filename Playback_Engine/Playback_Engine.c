@@ -69,8 +69,8 @@ void setup_playback() {
 	kick.sample_buffer = (int16_t*) malloc(sizeof(int16_t) * kick.bufferSize);
 	//Fill with data
 	FillBufferFromSDcard(kick.sample_buffer);
-	kick.sample_pt = kick.bufferSize+5; //Set it to outside range intially so it doesn't trigger
-	kick.volume = 100000;
+	kick.sample_pt = kick.bufferSize + 5; //Set it to outside range intially so it doesn't trigger
+	kick.volume = 6000;
 
 	HPS_ResetWatchdog();
 
@@ -85,42 +85,42 @@ void setup_playback() {
 	snare.bufferSize = readWavFileHeader("snare.wav");
 	snare.sample_buffer = (int16_t*) malloc(sizeof(int16_t) * snare.bufferSize);
 	FillBufferFromSDcard(snare.sample_buffer);
-	snare.sample_pt = snare.bufferSize+5;
+	snare.sample_pt = snare.bufferSize + 5;
 	snare.volume = 100000;
 	HPS_ResetWatchdog();
 	///////////////////ride/////////////////////////////////////////////////////////////////////
 	ride.bufferSize = readWavFileHeader("ride.wav");
 	ride.sample_buffer = (int16_t*) malloc(sizeof(int16_t) * ride.bufferSize);
 	FillBufferFromSDcard(ride.sample_buffer);
-	ride.sample_pt = ride.bufferSize+5;
+	ride.sample_pt = ride.bufferSize + 5;
 	ride.volume = 100000;
 	HPS_ResetWatchdog();
 	///////////////////tom/////////////////////////////////////////////////////////////////////
 	tom.bufferSize = readWavFileHeader("tom.wav");
 	tom.sample_buffer = (int16_t*) malloc(sizeof(int16_t) * tom.bufferSize);
 	FillBufferFromSDcard(tom.sample_buffer);
-	tom.sample_pt = tom.bufferSize+5;
+	tom.sample_pt = tom.bufferSize + 5;
 	tom.volume = 100000;
 	HPS_ResetWatchdog();
 	///////////////////hatc/////////////////////////////////////////////////////////////////////
 	hatc.bufferSize = readWavFileHeader("hatc.wav");
 	hatc.sample_buffer = (int16_t*) malloc(sizeof(int16_t) * hatc.bufferSize);
 	FillBufferFromSDcard(hatc.sample_buffer);
-	hatc.sample_pt = hatc.bufferSize+ 5;
+	hatc.sample_pt = hatc.bufferSize + 5;
 	hatc.volume = 100000;
 	HPS_ResetWatchdog();
 	///////////////////hato/////////////////////////////////////////////////////////////////////
 	hato.bufferSize = readWavFileHeader("hato.wav");
 	hato.sample_buffer = (int16_t*) malloc(sizeof(int16_t) * hato.bufferSize);
 	FillBufferFromSDcard(hato.sample_buffer);
-	hato.sample_pt = hato.bufferSize+2;
+	hato.sample_pt = hato.bufferSize + 2;
 	hato.volume = 100000;
 	HPS_ResetWatchdog();
 	///////////////////crash/////////////////////////////////////////////////////////////////////
 	crash.bufferSize = readWavFileHeader("crash.wav");
 	crash.sample_buffer = (int16_t*) malloc(sizeof(int16_t) * crash.bufferSize);
 	FillBufferFromSDcard(crash.sample_buffer);
-	crash.sample_pt = crash.bufferSize+5;
+	crash.sample_pt = crash.bufferSize + 5;
 	crash.volume = 100000;
 	HPS_ResetWatchdog();
 }
@@ -145,12 +145,13 @@ void setup_codec() {
 
 }
 
-void setup_graphics(){
-
+void setup_graphics() {
 
 	initDisplay();
 	Graphics_drawBox(0, 0, 239, 319, LT24_BLACK, 0, LT24_BLACK);
 	HPS_ResetWatchdog();
+	drawUI(current_channel, kick.sample_buffer, kick.bufferSize);
+
 }
 
 void step16(HPSIRQSource interruptID, bool isInit, void* initParams) {
@@ -338,7 +339,7 @@ void setup_IRQ() {
 	 * meaning each step is 1/6th of a bar (4 beats in a bar)
 	 */
 
-	HPS_timer0_ptr[0] = (100000000 * (BPM / 60)) / 16;
+	HPS_timer0_ptr[0] = 11718750;
 	// Write to control register to start timer, with interrupts
 	HPS_timer0_ptr[2] = 0x03; // mode = 1, enable = 1
 	// Register interrupt handler for timer
@@ -470,40 +471,6 @@ void exitOnFail(signed int status, signed int successStatus) {
 	}
 }
 
-void update7seg() {
-
-	//Display BPM on 7 segment display
-	//Hex 0-3
-	volatile unsigned int * HEX0to3_ptr = (unsigned int *) 0xFF200020;
-	volatile unsigned int * HEX4to5_ptr = (unsigned int *) 0xFF200030;
-
-	//Get digits from  BPMs
-	int digit0 = getNthDigit(0, BPM);
-	int digit1 = getNthDigit(1, BPM);
-	int digit2 = getNthDigit(2, BPM);
-	//Get 7 segment display representation
-	int hex3 = dec_to_BCD_table(digit0);
-	int hex4 = dec_to_BCD_table(digit1);
-	int hex5 = dec_to_BCD_table(digit2);
-
-	//Write to registers
-	*HEX4to5_ptr = hex4 | (hex5 << 8);
-	*HEX0to3_ptr = hex3 << 24;
-
-}
-
-//Have to update timer every time we change BPM
-void updateTimer() {
-
-	HPS_timer0_ptr[2] = 0; // write to control register to stop timer
-
-	//Set timer period again
-	HPS_timer0_ptr[0] = (100000000 * (BPM / 60)) / 16;
-	//Set timer on again
-	HPS_timer0_ptr[2] = 0x03; // mode = 1, enable = 1
-
-}
-
 //Lookup table for decimal to 7 segment display BCD value
 int dec_to_BCD_table(int no) {
 
@@ -555,59 +522,15 @@ int getNthDigit(int digit, int number) {
 
 }
 
-//For updating playback sequence for the channel currently selected when 'latch,
-//button pressed
-void latchSequence() {
-
-	//Get position of switches
-	volatile unsigned int * sw_ptr = (unsigned int *) SWITCH_PTR;
-
-	volatile unsigned int * HPS_gpio_ptr = (unsigned int *) 0xFF709000;
-
-	unsigned int sw_value = *sw_ptr;
-
-	//Toggle board green LED every step
-	unsigned int gpio_rmw;
-	gpio_rmw = HPS_gpio_ptr[HPS_GPIO_PORT];
-	gpio_rmw = gpio_rmw ^ (1 << 24);
-	HPS_gpio_ptr[HPS_GPIO_PORT] = gpio_rmw;
-
-	for (unsigned int i = 0; i < SEQUENCE_STEPS; i++) {
-
-		switch (current_channel) {
-
-		case 0:
-			kick.play_sequence[i] = (sw_value >> 9 - i) & 1U;
-			break;
-		case 7:
-			clap.play_sequence[i] = (sw_value >> 9 - i) & 1U;
-			break;
-		case 1:
-			snare.play_sequence[i] = (sw_value >> 9 - i) & 1U;
-			break;
-		case 2:
-			hatc.play_sequence[i] = (sw_value >> 9 - i) & 1U;
-			break;
-		case 3:
-			hato.play_sequence[i] = (sw_value >> 9 - i) & 1U;
-			break;
-		case 5:
-			ride.play_sequence[i] = (sw_value >> 9 - i) & 1U;
-			break;
-		case 6:
-			crash.play_sequence[i] = (sw_value >> 9 - i) & 1U;
-			break;
-		case 4:
-			tom.play_sequence[i] = (sw_value >> 9 - i) & 1U;
-			break;
-		}
-
-	}
-
-}
+int bpm_val = 128;
+bool latchSequence_flag = 0;
+bool incrementCH_flag = 0;
+bool BPM_up_flag = 0;
+bool BPM_down_flag = 0;
 
 //This ISR is for handling when any of the push buttons (KEY0-3) are pressed
 void pushbuttonISR(HPSIRQSource interruptID, bool isInit, void* initParams) {
+
 	if (!isInit) {
 		volatile unsigned int * KEY_ptr = (unsigned int *) 0xFF200050;
 		unsigned int press;
@@ -618,36 +541,24 @@ void pushbuttonISR(HPSIRQSource interruptID, bool isInit, void* initParams) {
 		//If KEY3 pressed
 		if (press & (1 << 3)) {
 			//Latch playback sequence from switches
-			latchSequence();
+			latchSequence_flag = 1;
 		}
 
 		//If KEY2 pressed
 		if (press & (1 << 2)) {
-			//Increment channel
-			if (current_channel < 7) {
-				current_channel++;
-			} else {
-				current_channel = 0;
-			}
-
-			drawUI(current_channel, kick.sample_buffer, kick.bufferSize);
-
+			incrementCH_flag = 1;
 		}
 
 		//KEY1
 		if (press & (1 << 1)) {
 			//Reduce BPM
-			BPM--;
-			update7seg();
-			updateTimer();
+			BPM_down_flag = 1;
 		}
 
 		//KEY0
 		if (press & (1 << 0)) {
 			//Speed up BPM
-			BPM++;
-			update7seg();
-			updateTimer();
+			BPM_up_flag = 1;
 		}
 
 		//Then clear the interrupt flag by writing the value back
@@ -656,4 +567,141 @@ void pushbuttonISR(HPSIRQSource interruptID, bool isInit, void* initParams) {
 	}
 	//Reset watchdog.
 	HPS_ResetWatchdog();
+}
+
+/*
+ *  For updating playback sequence for the channel currently selected when 'latch,
+ *	button pressed
+ *
+ */
+void latchSequence() {
+
+	if (latchSequence_flag) {
+		//Get position of switches
+		volatile unsigned int * sw_ptr = (unsigned int *) SWITCH_PTR;
+
+		volatile unsigned int * HPS_gpio_ptr = (unsigned int *) 0xFF709000;
+
+		unsigned int sw_value = *sw_ptr;
+
+		//Toggle board green LED every step
+		unsigned int gpio_rmw;
+		gpio_rmw = HPS_gpio_ptr[HPS_GPIO_PORT];
+		gpio_rmw = gpio_rmw ^ (1 << 24);
+		HPS_gpio_ptr[HPS_GPIO_PORT] = gpio_rmw;
+
+		for (unsigned int i = 0; i < SEQUENCE_STEPS; i++) {
+
+			switch (current_channel) {
+
+			case 0:
+				kick.play_sequence[i] = (sw_value >> 9 - i) & 1U;
+				break;
+			case 7:
+				clap.play_sequence[i] = (sw_value >> 9 - i) & 1U;
+				break;
+			case 1:
+				snare.play_sequence[i] = (sw_value >> 9 - i) & 1U;
+				break;
+			case 2:
+				hatc.play_sequence[i] = (sw_value >> 9 - i) & 1U;
+				break;
+			case 3:
+				hato.play_sequence[i] = (sw_value >> 9 - i) & 1U;
+				break;
+			case 5:
+				ride.play_sequence[i] = (sw_value >> 9 - i) & 1U;
+				break;
+			case 6:
+				crash.play_sequence[i] = (sw_value >> 9 - i) & 1U;
+				break;
+			case 4:
+				tom.play_sequence[i] = (sw_value >> 9 - i) & 1U;
+				break;
+			}
+
+		}
+
+		//Turn off flag
+		latchSequence_flag = 0;
+	}
+}
+
+void incrementCH() {
+
+	if (incrementCH_flag) {
+
+		//Increment channel
+		if (current_channel < 7) {
+			current_channel++;
+		} else {
+			current_channel = 0;
+		}
+
+		drawUI(current_channel, kick.sample_buffer, kick.bufferSize);
+		incrementCH_flag = 0;
+	}
+}
+
+void updateBPM() {
+
+	int timer_val = 0;
+
+	if (BPM_up_flag || BPM_down_flag) {
+		//Calculate new timer value
+		timer_val = 1500000000/BPM;
+	}
+
+	if (BPM_up_flag) {
+		BPM++;
+		update7seg(BPM);
+		updateTimer(timer_val);
+		BPM_up_flag = 0;
+	}
+
+	if (BPM_down_flag) {
+		BPM--;
+		update7seg(BPM);
+		updateTimer(timer_val);
+		BPM_down_flag = 0;
+	}
+
+}
+
+//Have to update timer every time we change BPM
+void updateTimer(int _timer_val) {
+
+	//HPS_IRQ_unregisterHandler(IRQ_TIMER_L4SP_0);
+
+	HPS_timer0_ptr[2] = 0; // write to control register to stop timer
+
+	//Set timer period again
+	HPS_timer0_ptr[0] = _timer_val;
+	//Set timer on again
+	HPS_timer0_ptr[2] = 0x03; // mode = 1, enable = 1
+
+	//HPS_IRQ_registerHandler(IRQ_TIMER_L4SP_0, step16);
+
+}
+
+void update7seg(int _bpm) {
+
+	//Display BPM on 7 segment display
+	//Hex 0-3
+	volatile unsigned int * HEX0to3_ptr = (unsigned int *) 0xFF200020;
+	volatile unsigned int * HEX4to5_ptr = (unsigned int *) 0xFF200030;
+
+	//Get digits from  BPMs
+	int digit0 = getNthDigit(0, _bpm);
+	int digit1 = getNthDigit(1, _bpm);
+	int digit2 = getNthDigit(2, _bpm);
+	//Get 7 segment display representation
+	int hex3 = dec_to_BCD_table(digit0);
+	int hex4 = dec_to_BCD_table(digit1);
+	int hex5 = dec_to_BCD_table(digit2);
+
+	//Write to registers
+	*HEX4to5_ptr = hex4 | (hex5 << 8);
+	*HEX0to3_ptr = hex3 << 24;
+
 }

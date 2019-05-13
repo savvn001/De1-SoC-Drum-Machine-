@@ -17,8 +17,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-
-
 int main(void) {
 
 	setup_playback();
@@ -27,12 +25,10 @@ int main(void) {
 	//fillFIFO();
 	setup_IRQ();
 
-	update7seg();
+	update7seg(128);
 
 	//Reset the watchdog.
 	HPS_ResetWatchdog();
-
-
 
 	ResetWDT();
 	//////////////////////////////////////////////////////////////////////////////////////////////
@@ -42,6 +38,12 @@ int main(void) {
 		//for(k = 0; k < (no. of channels); k++)
 		audioPlaybackPolling();
 		HPS_ResetWatchdog();
+
+		//These functions are constantly polled as the push button ISR sets a flag if these need to be called
+		//(Keeps button ISR as short as possible)
+		latchSequence();
+		incrementCH();
+		updateBPM();
 
 	}
 

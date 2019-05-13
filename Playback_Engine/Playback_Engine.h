@@ -22,7 +22,7 @@
 void setup_playback();
 void setup_codec();
 void setup_IRQ();
-void update7seg();
+void update7seg(int bpm);
 void step16(HPSIRQSource interruptID, bool isInit, void* initParams);
 void audioISR(HPSIRQSource interruptID, bool isInit, void* initParams);
 int dec_to_BCD_table(int no);
@@ -31,6 +31,9 @@ int getNthDigit(int digit, int number);
 void exitOnFail(signed int status, signed int successStatus);
 void pushbuttonISR(HPSIRQSource interruptID, bool isInit, void* initParams);
 void fillFIFO();
-void updateTimer();
+void updateTimer(int _timer_val);
 void audioPlaybackPolling();
+void latchSequence();
+void incrementCH();
+void updateBPM();
 #endif /* PLAYBACK_ENGINE_PLAYBACK_ENGINE_H_ */
