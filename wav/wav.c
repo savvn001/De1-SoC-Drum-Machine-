@@ -64,7 +64,7 @@ uint32_t readWavFileHeader(const TCHAR* filename) {
 	}
 
 	/* Read header and place in header struct */
-	f_read(&WAVfile, &wavHeader, sizeof(wavHeader)*2, &bytes_read);
+	f_read(&WAVfile, &wavHeader, sizeof(wavHeader), &bytes_read);
 
 	int bytes =  wavHeader.bytes_in_data;
 	return bytes;
