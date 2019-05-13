@@ -66,9 +66,20 @@ uint32_t readWavFileHeader(const TCHAR* filename) {
 	/* Read header and place in header struct */
 	f_read(&WAVfile, &wavHeader, sizeof(wavHeader), &bytes_read);
 
-	int bytes =  wavHeader.bytes_in_data;
-	return bytes;
+	//Return how big 16 bit array to store samples should be
+	int array_size;
+	//If Mono
+	if(wavHeader.channels == 1){
+		array_size =  wavHeader.bytes_in_data /2;
+	}
+	//If Stereo
+	else if(wavHeader.channels == 2){
+		array_size =  wavHeader.bytes_in_data;
 
+
+	}
+
+	return array_size;
 }
 
 /*

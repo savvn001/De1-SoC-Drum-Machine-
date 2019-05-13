@@ -37,6 +37,7 @@ struct channel {
 	bool play_sequence[SEQUENCE_STEPS];	//Playback sequence
 	unsigned int bufferSize; 		//Number of elements in sample data
 	int16_t *sample_buffer;		//Pointer to buffer storing sample data
+	int16_t channels; 			//Number of channels ie. 1 = mono, 2 = stereo
 	bool isPlaying;	//Used later on to determine whether instrument currently playing or not
 	unsigned int volume;
 	unsigned int sample_pt;	//Which element in the sample's buffer is currently being output
@@ -54,7 +55,6 @@ int current_channel = 0;
 
 void setup_playback() {
 
-
 	///////////////////////////////////////////////////////////////////
 	//////////////////// SD Card Setup /////////////////////////////////
 	///////////////////////////////////////////////////////////////////
@@ -64,62 +64,63 @@ void setup_playback() {
 
 	///////////////////Kick/////////////////////////////////////////////////////////////////////
 	//Calculate size of buffer from header value which returns no. of bytes in data
-	kick.bufferSize = readWavFileHeader("kick.wav")/2;
+	kick.bufferSize = readWavFileHeader("kick.wav");
 	//Create array to store audio samples
 	kick.sample_buffer = (int16_t*) malloc(sizeof(int16_t) * kick.bufferSize);
 	//Fill with data
 	FillBufferFromSDcard(kick.sample_buffer);
-	kick.sample_pt = 0; //Set it to outside range intially so it doesn't trigger
+	kick.sample_pt = kick.bufferSize+5; //Set it to outside range intially so it doesn't trigger
 	kick.volume = 6000;
+
 	HPS_ResetWatchdog();
 
 	///////////////////clap/////////////////////////////////////////////////////////////////////
-	clap.bufferSize = readWavFileHeader("clap.wav") / 2;
+	clap.bufferSize = readWavFileHeader("clap.wav");
 	clap.sample_buffer = (int16_t*) malloc(sizeof(int16_t) * clap.bufferSize);
 	FillBufferFromSDcard(clap.sample_buffer);
-	clap.sample_pt = 0;
+	clap.sample_pt = clap.bufferSize + 5;
 	clap.volume = 6000;
 	HPS_ResetWatchdog();
 	///////////////////snare/////////////////////////////////////////////////////////////////////
-	snare.bufferSize = readWavFileHeader("snare.wav") / 2;
+	snare.bufferSize = readWavFileHeader("snare.wav");
 	snare.sample_buffer = (int16_t*) malloc(sizeof(int16_t) * snare.bufferSize);
 	FillBufferFromSDcard(snare.sample_buffer);
-	snare.sample_pt = 0;
+	snare.sample_pt = snare.bufferSize+5;
 	snare.volume = 6000;
 	HPS_ResetWatchdog();
 	///////////////////ride/////////////////////////////////////////////////////////////////////
-	ride.bufferSize = readWavFileHeader("ride.wav") / 2;
+	ride.bufferSize = readWavFileHeader("ride.wav");
 	ride.sample_buffer = (int16_t*) malloc(sizeof(int16_t) * ride.bufferSize);
 	FillBufferFromSDcard(ride.sample_buffer);
-	ride.sample_pt = 0;
+	ride.sample_pt = ride.bufferSize+5;
 	ride.volume = 6000;
 	HPS_ResetWatchdog();
 	///////////////////tom/////////////////////////////////////////////////////////////////////
-	tom.bufferSize = readWavFileHeader("tom.wav") / 2;
+	tom.bufferSize = readWavFileHeader("tom.wav");
 	tom.sample_buffer = (int16_t*) malloc(sizeof(int16_t) * tom.bufferSize);
 	FillBufferFromSDcard(tom.sample_buffer);
-	tom.sample_pt = 0;
+	tom.sample_pt = tom.bufferSize+5;
 	tom.volume = 6000;
 	HPS_ResetWatchdog();
 	///////////////////hatc/////////////////////////////////////////////////////////////////////
-	hatc.bufferSize = readWavFileHeader("hatc.wav") / 2;
+	hatc.bufferSize = readWavFileHeader("hatc.wav");
 	hatc.sample_buffer = (int16_t*) malloc(sizeof(int16_t) * hatc.bufferSize);
 	FillBufferFromSDcard(hatc.sample_buffer);
-	hatc.sample_pt = 0;
+	hatc.sample_pt = hatc.bufferSize+ 5;
 	hatc.volume = 6000;
 	HPS_ResetWatchdog();
 	///////////////////hato/////////////////////////////////////////////////////////////////////
-	hato.bufferSize = readWavFileHeader("hato.wav") / 2;
+	hato.bufferSize = readWavFileHeader("hato.wav");
 	hato.sample_buffer = (int16_t*) malloc(sizeof(int16_t) * hato.bufferSize);
 	FillBufferFromSDcard(hato.sample_buffer);
-	hato.sample_pt = 0;
+	hato.sample_pt = hato.bufferSize+2;
 	hato.volume = 6000;
 	HPS_ResetWatchdog();
 	///////////////////crash/////////////////////////////////////////////////////////////////////
-	crash.bufferSize = readWavFileHeader("crash.wav") / 2;
+	crash.bufferSize = readWavFileHeader("crash.wav");
 	crash.sample_buffer = (int16_t*) malloc(sizeof(int16_t) * crash.bufferSize);
 	FillBufferFromSDcard(crash.sample_buffer);
-	crash.sample_pt = 0;
+	crash.sample_pt = crash.bufferSize+5;
 	crash.volume = 6000;
 	HPS_ResetWatchdog();
 }
@@ -389,64 +390,57 @@ void audioPlaybackPolling() {
 		//Get output from kick
 		if (kick.sample_pt < kick.bufferSize) {
 			audioOutputL += kick.sample_buffer[kick.sample_pt] * kick.volume;
-			audioOutputR += kick.sample_buffer[kick.sample_pt + 1]
-					* kick.volume;
-			kick.sample_pt += 2;
+			audioOutputR += kick.sample_buffer[kick.sample_pt] * kick.volume;
+			kick.sample_pt++;
 		}
 
 		//Get output from clap
 		if (clap.sample_pt < clap.bufferSize) {
 			audioOutputL += clap.sample_buffer[clap.sample_pt] * clap.volume;
-			audioOutputR += clap.sample_buffer[clap.sample_pt + 1]
-					* clap.volume;
-			clap.sample_pt += 2;
+			audioOutputR += clap.sample_buffer[clap.sample_pt] * clap.volume;
+			clap.sample_pt += 1;
 		}
 
 		//Get output from snare
 		if (snare.sample_pt < snare.bufferSize) {
 			audioOutputL += snare.sample_buffer[snare.sample_pt] * snare.volume;
-			audioOutputR += snare.sample_buffer[snare.sample_pt + 1]
-					* snare.volume;
-			snare.sample_pt += 2;
+			audioOutputR += snare.sample_buffer[snare.sample_pt] * snare.volume;
+			snare.sample_pt += 1;
 		}
 
 		//Get output from tom
 		if (tom.sample_pt < tom.bufferSize) {
 			audioOutputL += tom.sample_buffer[tom.sample_pt] * tom.volume;
-			audioOutputR += tom.sample_buffer[tom.sample_pt + 1] * tom.volume;
-			tom.sample_pt += 2;
+			audioOutputR += tom.sample_buffer[tom.sample_pt] * tom.volume;
+			tom.sample_pt += 1;
 		}
 
 		//Get output from ride
 		if (ride.sample_pt < ride.bufferSize) {
 			audioOutputL += ride.sample_buffer[ride.sample_pt] * ride.volume;
-			audioOutputR += ride.sample_buffer[ride.sample_pt + 1]
-					* ride.volume;
-			ride.sample_pt += 2;
+			audioOutputR += ride.sample_buffer[ride.sample_pt] * ride.volume;
+			ride.sample_pt += 1;
 		}
 
 		//Get output from hato
 		if (hato.sample_pt < hato.bufferSize) {
 			audioOutputL += hato.sample_buffer[hato.sample_pt] * hato.volume;
-			audioOutputR += hato.sample_buffer[hato.sample_pt + 1]
-					* hato.volume;
-			hato.sample_pt += 2;
+			audioOutputR += hato.sample_buffer[hato.sample_pt] * hato.volume;
+			hato.sample_pt += 1;
 		}
 
 		//Get output from hatc
 		if (hatc.sample_pt < hatc.bufferSize) {
 			audioOutputL += hatc.sample_buffer[hatc.sample_pt] * hatc.volume;
-			audioOutputR += hatc.sample_buffer[hatc.sample_pt + 1]
-					* hatc.volume;
-			hatc.sample_pt += 2;
+			audioOutputR += hatc.sample_buffer[hatc.sample_pt] * hatc.volume;
+			hatc.sample_pt += 1;
 		}
 
 		//Get output from crash
 		if (crash.sample_pt < crash.bufferSize) {
 			audioOutputL += crash.sample_buffer[crash.sample_pt] * crash.volume;
-			audioOutputR += crash.sample_buffer[crash.sample_pt + 1]
-					* crash.volume;
-			crash.sample_pt += 2;
+			audioOutputR += crash.sample_buffer[crash.sample_pt] * crash.volume;
+			crash.sample_pt += 1;
 		}
 
 		HPS_ResetWatchdog();
