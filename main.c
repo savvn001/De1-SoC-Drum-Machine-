@@ -26,8 +26,11 @@ int main(void) {
 
 	setup_playback();
 	setup_codec();
+	//fillFIFO();
 	setup_IRQ();
+
 	update7seg();
+
 
 
 	//Reset the watchdog.

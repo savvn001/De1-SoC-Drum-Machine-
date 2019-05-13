@@ -116,7 +116,7 @@ signed int WM8731_enableIRQ(){
     //WE
     cntrl |= 1<<1;
     //RE
-    //cntrl |= 1<<0;
+    cntrl |= 1<<0;
 
     wm8731_base_ptr[WM8731_CONTROL] = cntrl;
 

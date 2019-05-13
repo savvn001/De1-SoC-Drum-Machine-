@@ -29,6 +29,7 @@ int getNthDigit(int digit, int number);
 
 void exitOnFail(signed int status, signed int successStatus);
 void pushbuttonISR(HPSIRQSource interruptID, bool isInit, void* initParams);
-
+void fillFIFO();
+void updateTimer();
 void audioPlaybackPolling();
 #endif /* PLAYBACK_ENGINE_PLAYBACK_ENGINE_H_ */
