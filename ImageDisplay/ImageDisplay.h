@@ -12,9 +12,10 @@
 #include "../DE1SoC_LT24/DE1SoC_LT24.h"
 #include "Images.h"
 #include "../HPS_Watchdog/HPS_Watchdog.h"
-
+#include <stdint.h>
 
 void initDisplay();
-void drawUI(int channel);
+void drawUI(int channel, int16_t *sample_buffer, int length );
+void plot(int16_t *sample_buffer, int length);
 
 #endif /* IMAGEDISPLAY_IMAGEDISPLAY_H_ */

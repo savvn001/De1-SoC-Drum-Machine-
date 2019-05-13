@@ -70,7 +70,7 @@ void setup_playback() {
 	//Fill with data
 	FillBufferFromSDcard(kick.sample_buffer);
 	kick.sample_pt = kick.bufferSize+5; //Set it to outside range intially so it doesn't trigger
-	kick.volume = 6000;
+	kick.volume = 100000;
 
 	HPS_ResetWatchdog();
 
@@ -79,49 +79,49 @@ void setup_playback() {
 	clap.sample_buffer = (int16_t*) malloc(sizeof(int16_t) * clap.bufferSize);
 	FillBufferFromSDcard(clap.sample_buffer);
 	clap.sample_pt = clap.bufferSize + 5;
-	clap.volume = 6000;
+	clap.volume = 100000;
 	HPS_ResetWatchdog();
 	///////////////////snare/////////////////////////////////////////////////////////////////////
 	snare.bufferSize = readWavFileHeader("snare.wav");
 	snare.sample_buffer = (int16_t*) malloc(sizeof(int16_t) * snare.bufferSize);
 	FillBufferFromSDcard(snare.sample_buffer);
 	snare.sample_pt = snare.bufferSize+5;
-	snare.volume = 6000;
+	snare.volume = 100000;
 	HPS_ResetWatchdog();
 	///////////////////ride/////////////////////////////////////////////////////////////////////
 	ride.bufferSize = readWavFileHeader("ride.wav");
 	ride.sample_buffer = (int16_t*) malloc(sizeof(int16_t) * ride.bufferSize);
 	FillBufferFromSDcard(ride.sample_buffer);
 	ride.sample_pt = ride.bufferSize+5;
-	ride.volume = 6000;
+	ride.volume = 100000;
 	HPS_ResetWatchdog();
 	///////////////////tom/////////////////////////////////////////////////////////////////////
 	tom.bufferSize = readWavFileHeader("tom.wav");
 	tom.sample_buffer = (int16_t*) malloc(sizeof(int16_t) * tom.bufferSize);
 	FillBufferFromSDcard(tom.sample_buffer);
 	tom.sample_pt = tom.bufferSize+5;
-	tom.volume = 6000;
+	tom.volume = 100000;
 	HPS_ResetWatchdog();
 	///////////////////hatc/////////////////////////////////////////////////////////////////////
 	hatc.bufferSize = readWavFileHeader("hatc.wav");
 	hatc.sample_buffer = (int16_t*) malloc(sizeof(int16_t) * hatc.bufferSize);
 	FillBufferFromSDcard(hatc.sample_buffer);
 	hatc.sample_pt = hatc.bufferSize+ 5;
-	hatc.volume = 6000;
+	hatc.volume = 100000;
 	HPS_ResetWatchdog();
 	///////////////////hato/////////////////////////////////////////////////////////////////////
 	hato.bufferSize = readWavFileHeader("hato.wav");
 	hato.sample_buffer = (int16_t*) malloc(sizeof(int16_t) * hato.bufferSize);
 	FillBufferFromSDcard(hato.sample_buffer);
 	hato.sample_pt = hato.bufferSize+2;
-	hato.volume = 6000;
+	hato.volume = 100000;
 	HPS_ResetWatchdog();
 	///////////////////crash/////////////////////////////////////////////////////////////////////
 	crash.bufferSize = readWavFileHeader("crash.wav");
 	crash.sample_buffer = (int16_t*) malloc(sizeof(int16_t) * crash.bufferSize);
 	FillBufferFromSDcard(crash.sample_buffer);
 	crash.sample_pt = crash.bufferSize+5;
-	crash.volume = 6000;
+	crash.volume = 100000;
 	HPS_ResetWatchdog();
 }
 
@@ -630,7 +630,7 @@ void pushbuttonISR(HPSIRQSource interruptID, bool isInit, void* initParams) {
 				current_channel = 0;
 			}
 
-			drawUI(current_channel);
+			drawUI(current_channel, kick.sample_buffer, kick.bufferSize);
 
 		}
 
