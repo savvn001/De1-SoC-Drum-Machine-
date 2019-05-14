@@ -1,11 +1,13 @@
 /*
  * 	main.c
+
+
  *
  * "DE808" Classic TR808/909 style drum machine implemented on
  *  a De1-SoC.
  *
  *
- *	Authors: Nicholas Savva, Calum Boustead, Calum Boustead
+ *	Authors: Nicholas Savva, Calum Boustead,  Samrudh Sharma
  */
 #include "DE1SoC_LT24/DE1SoC_LT24.h"
 #include "Playback_Engine/Playback_Engine.h"
@@ -13,7 +15,6 @@
 #include <stdio.h>
 
 int main(void) {
-
 
 	//Init Peripherals
 	setup_playback();

@@ -76,13 +76,19 @@ EmbeddedDrumMachine.axf: $(OBJS) C:/Users/Nick/Documents/DS-5\ Workspace/Embedde
 	armlink --cpu=Cortex-A9.no_neon --entry=__main --scatter="C:/Users/Nick/Documents/DS-5 Workspace/EmbeddedDrumMachine/DDRRomRamIRQ.scat" --info=sizes -o "EmbeddedDrumMachine.axf" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
+	$(MAKE) --no-print-directory post-build
 
 # Other Targets
 clean:
 	-$(RM) $(C_UPPER_DEPS) $(S_DEPS) $(C_DEPS) $(CC_DEPS) $(SX_DEPS) $(ASM_UPPER_DEPS) $(C++_DEPS) $(EXECUTABLES) $(CXX_DEPS) $(OBJS) $(SX_UPPER_DEPS) $(ASM_DEPS) $(S_UPPER_DEPS) $(CPP_DEPS) EmbeddedDrumMachine.axf 
 	-@echo ' '
 
+post-build:
+	-@echo 'Extract Binary File from Compiler Output'
+	-fromelf --bin --output=baremetal.bin EmbeddedDrumMachine.axf
+	-@echo ' '
+
 .PHONY: all clean dependents
-.SECONDARY:
+.SECONDARY: post-build
 
 -include ../makefile.targets

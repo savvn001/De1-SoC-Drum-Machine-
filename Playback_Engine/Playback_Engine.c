@@ -1,11 +1,12 @@
 /*
  * Playback_Engine.c
 
+
  *
  * Driver for main playback engine. Handles loading of SD card data into memory and audio playback
  *
  *  Created on: May 2019
- *  Author: Nicholas Savva
+ *  Authors: Nicholas Savva, Calum Boustead, Samrudh Sharma
  */
 #include "Playback_Engine.h"
 
@@ -552,8 +553,6 @@ int getNthDigit(int digit, int number) {
 
 }
 
-
-
 /*
  * This ISR is for handling when any of the push buttons (KEY0-3) are pressed
  */
@@ -667,7 +666,42 @@ void incrementCH() {
 			current_channel = 0;
 		}
 
-		drawUI(current_channel, kick.sample_buffer, kick.bufferSize);
+		switch (current_channel) {
+
+		case 0:
+			drawUI(current_channel, kick.sample_buffer, kick.bufferSize);
+			HPS_ResetWatchdog();
+			break;
+		case 7:
+			drawUI(current_channel, clap.sample_buffer, clap.bufferSize);
+			HPS_ResetWatchdog();
+			break;
+		case 1:
+			drawUI(current_channel, snare.sample_buffer, snare.bufferSize);
+			HPS_ResetWatchdog();
+			break;
+		case 2:
+			drawUI(current_channel, hatc.sample_buffer, hatc.bufferSize);
+			HPS_ResetWatchdog();
+			break;
+		case 3:
+			drawUI(current_channel, hato.sample_buffer, hato.bufferSize);
+			HPS_ResetWatchdog();
+			break;
+		case 5:
+			drawUI(current_channel, ride.sample_buffer, ride.bufferSize);
+			HPS_ResetWatchdog();
+			break;
+		case 6:
+			drawUI(current_channel, crash.sample_buffer, crash.bufferSize);
+			HPS_ResetWatchdog();
+			break;
+		case 4:
+			drawUI(current_channel, tom.sample_buffer, tom.bufferSize);
+			HPS_ResetWatchdog();
+			break;
+		}
+
 		incrementCH_flag = 0;
 	}
 }

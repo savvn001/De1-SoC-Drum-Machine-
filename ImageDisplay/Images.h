@@ -16,5 +16,6 @@ extern const unsigned short Kick[19200];
 extern const unsigned short Ride[19200];
 extern const unsigned short Snare[19200];
 extern const unsigned short Tom[19200];
+extern const unsigned short border[57600];
 
 #endif /* TEST_H_ */
