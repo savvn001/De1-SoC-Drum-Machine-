@@ -70,7 +70,7 @@ void setup_playback() {
 	//Fill with data
 	FillBufferFromSDcard(kick.sample_buffer);
 	kick.sample_pt = kick.bufferSize + 5; //Set it to outside range intially so it doesn't trigger
-	kick.volume = 6000;
+	kick.volume = 100000;
 
 	HPS_ResetWatchdog();
 
@@ -154,7 +154,7 @@ void setup_graphics() {
 
 }
 
-void step16(HPSIRQSource interruptID, bool isInit, void* initParams) {
+void step_seq(HPSIRQSource interruptID, bool isInit, void* initParams) {
 	if (!isInit) {
 
 		volatile unsigned int * HPS_timer0_ptr = (unsigned int *) 0xFFC08000;
@@ -343,7 +343,7 @@ void setup_IRQ() {
 	// Write to control register to start timer, with interrupts
 	HPS_timer0_ptr[2] = 0x03; // mode = 1, enable = 1
 	// Register interrupt handler for timer
-	HPS_IRQ_registerHandler(IRQ_TIMER_L4SP_0, step16);
+	HPS_IRQ_registerHandler(IRQ_TIMER_L4SP_0, step_seq);
 	HPS_ResetWatchdog();
 
 	volatile unsigned int * KEY_ptr = (unsigned int *) 0xFF200050;
@@ -671,16 +671,12 @@ void updateBPM() {
 //Have to update timer every time we change BPM
 void updateTimer(int _timer_val) {
 
-	//HPS_IRQ_unregisterHandler(IRQ_TIMER_L4SP_0);
-
-	HPS_timer0_ptr[2] = 0; // write to control register to stop timer
-
+	//Stop timer whilst we change it's load value
+	HPS_timer0_ptr[2] = 0;
 	//Set timer period again
 	HPS_timer0_ptr[0] = _timer_val;
 	//Set timer on again
 	HPS_timer0_ptr[2] = 0x03; // mode = 1, enable = 1
-
-	//HPS_IRQ_registerHandler(IRQ_TIMER_L4SP_0, step16);
 
 }
 
