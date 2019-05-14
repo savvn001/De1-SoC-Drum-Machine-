@@ -1,8 +1,11 @@
 /*
  * Playback_Engine.c
+
  *
- *  Created on: 11 May 2019
- *      Author: Nick
+ * Driver for main playback engine. Handles loading of SD card data into memory and audio playback
+ *
+ *  Created on: May 2019
+ *  Author: Nicholas Savva
  */
 #include "Playback_Engine.h"
 
@@ -18,6 +21,7 @@
 
 /***************** Global variables for this driver *********************/
 int BPM = 128;
+//Current step of sequence
 int sequence_step = 0;
 
 //Codec memory mapped peripheral pointers
@@ -32,6 +36,15 @@ volatile unsigned int * HPS_timer0_ptr = (unsigned int *) 0xFFC08000;
 signed int audioOutputL = 0;
 signed int audioOutputR = 0;
 
+int bpm_val = 128;
+
+//Flags for interrupt functions
+bool latchSequence_flag = 0;
+bool incrementCH_flag = 0;
+bool BPM_up_flag = 0;
+bool BPM_down_flag = 0;
+
+//Struct for holding information for each sound
 struct channel {
 
 	bool play_sequence[SEQUENCE_STEPS];	//Playback sequence
@@ -53,6 +66,9 @@ char channel_names[8][10] = {
 //CH0 = Kick, CH1 = snare, CH2 = hatc etc... as ordered in struct declaration
 int current_channel = 0;
 
+/*
+ * Read samples from SD card and store in DDR memory
+ */
 void setup_playback() {
 
 	///////////////////////////////////////////////////////////////////
@@ -125,6 +141,9 @@ void setup_playback() {
 	HPS_ResetWatchdog();
 }
 
+/*
+ * Initialize WM8731 codec
+ */
 void setup_codec() {
 
 	/////////////////////////////////////////////////////////////////////////////
@@ -145,15 +164,23 @@ void setup_codec() {
 
 }
 
+/*
+ * Initialize LCD and graphics engine
+ */
 void setup_graphics() {
 
 	initDisplay();
+	//Draw box to cover background
 	Graphics_drawBox(0, 0, 239, 319, LT24_BLACK, 0, LT24_BLACK);
 	HPS_ResetWatchdog();
+	//Draw current sample name on LCD
 	drawUI(current_channel, kick.sample_buffer, kick.bufferSize);
 
 }
 
+/*
+ * Each step of the 8 step sequence this will get called by HPS timer0
+ */
 void step_seq(HPSIRQSource interruptID, bool isInit, void* initParams) {
 	if (!isInit) {
 
@@ -163,6 +190,7 @@ void step_seq(HPSIRQSource interruptID, bool isInit, void* initParams) {
 		//Toggle board green LED every step
 		unsigned int gpio_rmw;
 
+		//Move currently lit LED rights
 		*LED_step_ptr = 0x200 >> sequence_step;
 
 		//Check if sound set to trigger on current step
@@ -354,7 +382,7 @@ void setup_IRQ() {
 	//Register interrupt handler for keys
 	HPS_IRQ_registerHandler(IRQ_LSC_KEYS, pushbuttonISR);
 
-	/*********** Timer 1 will be called every time period of the sampling rate Fs, so 1/Fs ******/
+	/*********** Timer 1  ******/
 
 //	volatile unsigned int * HPS_timer1_ptr = (unsigned int *) 0xFFC09000;
 //
@@ -513,7 +541,9 @@ int dec_to_BCD_table(int no) {
 	return result;
 }
 
-//Get Nth digit of input number
+/*
+ * Get Nth digit of input number
+ */
 int getNthDigit(int digit, int number) {
 
 	while (digit--)
@@ -522,13 +552,11 @@ int getNthDigit(int digit, int number) {
 
 }
 
-int bpm_val = 128;
-bool latchSequence_flag = 0;
-bool incrementCH_flag = 0;
-bool BPM_up_flag = 0;
-bool BPM_down_flag = 0;
 
-//This ISR is for handling when any of the push buttons (KEY0-3) are pressed
+
+/*
+ * This ISR is for handling when any of the push buttons (KEY0-3) are pressed
+ */
 void pushbuttonISR(HPSIRQSource interruptID, bool isInit, void* initParams) {
 
 	if (!isInit) {
@@ -590,6 +618,7 @@ void latchSequence() {
 		gpio_rmw = gpio_rmw ^ (1 << 24);
 		HPS_gpio_ptr[HPS_GPIO_PORT] = gpio_rmw;
 
+		//Loop through and assign switch value to playback array
 		for (unsigned int i = 0; i < SEQUENCE_STEPS; i++) {
 
 			switch (current_channel) {
@@ -649,7 +678,7 @@ void updateBPM() {
 
 	if (BPM_up_flag || BPM_down_flag) {
 		//Calculate new timer value
-		timer_val = 1500000000/BPM;
+		timer_val = 1500000000 / BPM;
 	}
 
 	if (BPM_up_flag) {

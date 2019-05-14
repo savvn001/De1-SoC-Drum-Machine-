@@ -36,4 +36,5 @@ void audioPlaybackPolling();
 void latchSequence();
 void incrementCH();
 void updateBPM();
+setup_graphics();
 #endif /* PLAYBACK_ENGINE_PLAYBACK_ENGINE_H_ */

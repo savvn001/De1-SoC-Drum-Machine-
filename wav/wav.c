@@ -1,7 +1,10 @@
 /*
  * wav.c
  *
- *  Created on: 11 May 2019
+ *	For interfacing with SD card and reading .wav file header data and
+ *	raw sample data
+ *
+ *  Created on: May 2019
  *      Author: Nick
  */
 

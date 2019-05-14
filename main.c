@@ -1,17 +1,12 @@
 /*
- * main.c
+ * 	main.c
  *
- * This program is a simple piece of code to test the Watchdog Timer.
+ * "DE808" Classic TR808/909 style drum machine implemented on
+ *  a De1-SoC.
  *
- * The watchdog will be reset any time a button is pressed.
  *
- * The value of the watchdog timer is displayed on the red LEDs.
- *
- *  Created on: 13 Jan 2018
- *      Author: Doug from Up.
- *       Notes: Squirrel!
+ *	Authors: Nicholas Savva, Calum Boustead, Calum Boustead
  */
-
 #include "DE1SoC_LT24/DE1SoC_LT24.h"
 #include "Playback_Engine/Playback_Engine.h"
 #include <stdlib.h>
@@ -19,6 +14,8 @@
 
 int main(void) {
 
+
+	//Init Peripherals
 	setup_playback();
 	setup_codec();
 	setup_graphics();
@@ -35,7 +32,6 @@ int main(void) {
 
 	while (1) {
 
-		//for(k = 0; k < (no. of channels); k++)
 		audioPlaybackPolling();
 		HPS_ResetWatchdog();
 
