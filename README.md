@@ -6,7 +6,7 @@ Features:
 
 - 8-step patterns
 - BPM on 7 segment display, adjustable
-- Waveform plot on LT24 LCD
+- Waveform plot on LT24 LCD (need alot of work though)
 
 TODO:
 
