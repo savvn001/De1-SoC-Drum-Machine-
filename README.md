@@ -14,3 +14,5 @@ TODO:
 - More UI stuff
 - Saving/recall patterns
 - Get audio to work on interrupts/implement patterns task scheduler 
+
+![Schematic](drums.png?raw=true "Schematic") 
