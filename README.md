@@ -15,4 +15,4 @@ TODO:
 - Saving/recall patterns
 - Get audio to work on interrupts/implement patterns task scheduler 
 
-![Schematic](drums.png?raw=true "Schematic") 
+![Schematic](drums.jpg?raw=true "Schematic") 
